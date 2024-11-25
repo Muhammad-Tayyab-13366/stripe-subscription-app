@@ -1,0 +1,16 @@
+.sub_row{
+    margin: auto;
+}
+
+.sub_card{
+    padding: 10px;
+    background: #eee;
+    text-align: center;
+    box-shadow: 1px 1px 5px lightgray;
+}
+
+.confirmation-data{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
