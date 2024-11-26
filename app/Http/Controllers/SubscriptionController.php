@@ -44,13 +44,29 @@ class SubscriptionController extends Controller
 
     public function createSubscription(Request $request){
         try {
-
+            $planId = $request->planId;
             $user_id =  auth()->user()->id;
             $stripe_key = config('services.stripe.secret_key');
             $stripe = Stripe::setApiKey($stripe_key);
             $stripeData = $request->data;
+            // create custoomer in stripe
             $customer = $this->createCustomer($stripeData['id']);
             $customer_id = $customer['id'];
+
+            // get subscription plan
+            $subscriptionPlan = SubscriptionPlan::where('id', $planId)->first();
+            /*
+                Subscription types
+                0 -> Monthly, 1-> Yearly, 2-> Lifetime
+            */
+            if($subscriptionPlan->type == 0){
+
+            }else if($subscriptionPlan->type == 1){
+
+            }else if($subscriptionPlan->type == 2){
+
+            }
+
             if($customer){
                 $this->saveCardDetail($stripeData, $user_id, $customer_id);
                 return response()->json(['success' => true, 'msg' => $customer ]);

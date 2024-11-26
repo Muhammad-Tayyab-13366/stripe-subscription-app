@@ -146,20 +146,19 @@
     }
 
     function createSubscription(token){
-        
+        planId = $("#planId").val();
         $.ajax({
             type: 'post',
             url: "{{ route('createSubscription') }}",
-            data: { 'data': token},
+            data: { 'data': token,
+                    'planId' : planId
+            },
             success: function(response){
                 if(response.success == true){
                    
-
                 }else {
-                    
                     alert('some thing went wrong');
                 }
-               
                 console.log(response);
             }
         })
