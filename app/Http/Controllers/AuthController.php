@@ -39,13 +39,14 @@ class AuthController extends Controller
 
     public function userLogin(Request $request){
         $request->validate([
-           
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
         if(Auth::attempt(['email' => $request->email, 'password' => $request->password])){
            return redirect()->route('dashboard');
+        }else {
+            return redirect()->back()->with('error', 'Email/Password is wrong' );
         }
     }
 
@@ -53,8 +54,14 @@ class AuthController extends Controller
         return view('dashboard');
     }
 
-    public function logout(){
-        Auth::logout();
-        return redirect('/');
+    public function logout(Request $request){
+
+        try {
+            $request->session()->flush();
+            Auth::logout();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'msg' => $e->getMessage()]);
+        }
     }
 }

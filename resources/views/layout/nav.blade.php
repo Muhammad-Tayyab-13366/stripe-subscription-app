@@ -16,10 +16,11 @@
           <a class="nav-link {{ Route::is('subscription') ? 'active' : '' }}" href="{{ route('subscription') }}">Subscription</a>
         </li>
       </ul>
-      <form class="d-flex">
+      <button id="btn-logout" class="btn btn-primary">Logout</button>
+      <!-- <form class="d-flex">
         <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
         <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
+      </form> -->
     </div>
   </div>
 </nav>

@@ -30,6 +30,26 @@
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
           }
       });
+      
+      $("#btn-logout").click(function (){
+        $.ajax({
+            type: 'post',
+            url: "{{ route('logout') }}",
+            data: {},
+            success: function(response){
+                if(response.success == true){
+                  location.reload();
+                }else {
+                  alert('Something went wrong');
+                }
+               
+
+            }
+        })
+      });
+      
+
+      
     </script>
     @yield('customjs')
   </body>

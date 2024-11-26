@@ -10,6 +10,12 @@
             @session('success')
             <h2 style="color:green" for="name">{{ session('success')  }}</h2>
             @endsession
+
+            @session('error')
+            <h2 style="color:red" for="name">{{ session('error')  }}</h2>
+            @endsession
+
+            
            
            
             <label for="mail">Email:</label>
