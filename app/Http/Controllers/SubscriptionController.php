@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Stripe\Stripe;
 use Stripe\Customer;
-
+use App\Helpers\SubscriptionHelper;
 
 class SubscriptionController extends Controller
 {
@@ -55,21 +55,44 @@ class SubscriptionController extends Controller
 
             // get subscription plan
             $subscriptionPlan = SubscriptionPlan::where('id', $planId)->first();
+            
+            // start and change subscription condition
+            $subscriptionDetail = SubscriptionDetail::where(['user_id' => $user_id, 'status' => 'active', 'cancel' => 0])->orderBy('id', 'desc')->first();
+            // check any subscription avaialbel for user
+            $subscriptionCount = SubscriptionDetail::where('user_id', $user_id)->count();
             /*
                 Subscription types
                 0 -> Monthly, 1-> Yearly, 2-> Lifetime
             */
-            if($subscriptionPlan->type == 0){
+            // if user wants change monthly to yearly
+            if($subscriptionDetail && $subscriptionDetail->plan_interval == 'month' && $subscriptionPlan->type == 1){
 
-            }else if($subscriptionPlan->type == 1){
+            }else if($subscriptionDetail && $subscriptionDetail->plan_interval == 'month' && $subscriptionPlan->type == 2){
 
-            }else if($subscriptionPlan->type == 2){
+            }else if($subscriptionDetail && $subscriptionDetail->plan_interval == 'year' && $subscriptionPlan->type == 0){
 
+            }else if($subscriptionDetail && $subscriptionDetail->plan_interval == 'year' && $subscriptionPlan->type == 2){
+
+            }else {
+                // not avaialble any subscription 
+                
             }
+            //
+            
+           $subscriptionData = null;
+            if($subscriptionPlan->type == 0){ 
+                $subscriptionData = SubscriptionHelper::start_monthly_trial_subscription($customer_id, $user_id, $subscriptionPlan );
+            }else if($subscriptionPlan->type == 1){
+                $subscriptionData = SubscriptionHelper::start_yearly_trial_subscription($customer_id, $user_id, $subscriptionPlan );
+            }else if($subscriptionPlan->type == 2){
+                $subscriptionData = SubscriptionHelper::start_lifetime_trial_subscription($customer_id, $user_id, $subscriptionPlan );
+            }
+            $this->saveCardDetail($stripeData, $user_id, $customer_id);
 
-            if($customer){
-                $this->saveCardDetail($stripeData, $user_id, $customer_id);
-                return response()->json(['success' => true, 'msg' => $customer ]);
+            if($subscriptionData != null){
+                return response()->json(['success' => true, 'msg' => 'Subscription Purchased!']);
+            }else {
+                return response()->json(['success' => false, 'msg' => 'Subscription Purchased Failed!']);
             }
         } catch (\Exception $e) {
             return response()->json(['success' => true, 'msg' => $e->getMessage()]);
@@ -87,7 +110,7 @@ class SubscriptionController extends Controller
     }
 
     function saveCardDetail($cardData, $user_id, $customer_id){
-        DB::enableQueryLog();
+       
         CardDetail::updateOrCreate(
             [
                 'user_id' => $user_id,
@@ -107,12 +130,6 @@ class SubscriptionController extends Controller
             ]
         );
 
-        $lastQuery = DB::getQueryLog();
-
-        // Get the most recent query
-        $lastQuery = end($lastQuery); // Retrieves the last query from the query log
-
-        // Output the last query and bindings
-        dd($lastQuery);
+       
     }
 }
