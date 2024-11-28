@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Stripe\Stripe;
 use Stripe\Customer;
+use Stripe\StripeClient;
 use App\Helpers\SubscriptionHelper;
 
 class SubscriptionController extends Controller
@@ -44,10 +45,13 @@ class SubscriptionController extends Controller
 
     public function createSubscription(Request $request){
         try {
+            $subscriptionData = null;
             $planId = $request->planId;
             $user_id =  auth()->user()->id;
             $stripe_key = config('services.stripe.secret_key');
-            $stripe = Stripe::setApiKey($stripe_key);
+            Stripe::setApiKey($stripe_key);
+
+            $stripe = new StripeClient($stripe_key);
             $stripeData = $request->data;
             // create custoomer in stripe
             $customer = $this->createCustomer($stripeData['id']);
@@ -75,18 +79,31 @@ class SubscriptionController extends Controller
 
             }else {
                 // not avaialble any subscription 
-                
+                if($subscriptionCount == 0){
+                    // give new user trial plan
+                    if($subscriptionPlan->type == 0){ 
+                        $subscriptionData = SubscriptionHelper::start_monthly_trial_subscription($customer_id, $user_id, $subscriptionPlan );
+                    }else if($subscriptionPlan->type == 1){
+                        $subscriptionData = SubscriptionHelper::start_yearly_trial_subscription($customer_id, $user_id, $subscriptionPlan );
+                    }else if($subscriptionPlan->type == 2){
+                        $subscriptionData = SubscriptionHelper::start_lifetime_trial_subscription($customer_id, $user_id, $subscriptionPlan );
+                    }
+                }else { // user all subscriptions are canlled
+
+                    if($subscriptionPlan->type == 0){ // monthly subscription
+                       SubscriptionHelper::capture_monthly_pending_fees($customer_id, $user_id, auth()->user()->name , $subscriptionPlan, $stripe);
+                       $subscriptionData = SubscriptionHelper::start_monthly_subscription($customer_id, $user_id, $subscriptionPlan, $stripe);
+                    }else if($subscriptionPlan->type == 1){ // yearly subscription 
+                        SubscriptionHelper::capture_yearly_pending_fees($customer_id, $user_id, auth()->user()->name , $subscriptionPlan, $stripe);
+                        $subscriptionData = SubscriptionHelper::start_yearly_subscription($customer_id, $user_id, $subscriptionPlan, $stripe);
+                    }else if($subscriptionPlan->type == 2){ // lifetime subscription
+                        $subscriptionData = SubscriptionHelper::start_lifetime_subscription($customer_id, $user_id, auth()->user()->name, $subscriptionPlan, $stripe);
+                    }
+                }
             }
             //
             
-           $subscriptionData = null;
-            if($subscriptionPlan->type == 0){ 
-                $subscriptionData = SubscriptionHelper::start_monthly_trial_subscription($customer_id, $user_id, $subscriptionPlan );
-            }else if($subscriptionPlan->type == 1){
-                $subscriptionData = SubscriptionHelper::start_yearly_trial_subscription($customer_id, $user_id, $subscriptionPlan );
-            }else if($subscriptionPlan->type == 2){
-                $subscriptionData = SubscriptionHelper::start_lifetime_trial_subscription($customer_id, $user_id, $subscriptionPlan );
-            }
+           
             $this->saveCardDetail($stripeData, $user_id, $customer_id);
 
             if($subscriptionData != null){
@@ -95,7 +112,7 @@ class SubscriptionController extends Controller
                 return response()->json(['success' => false, 'msg' => 'Subscription Purchased Failed!']);
             }
         } catch (\Exception $e) {
-            return response()->json(['success' => true, 'msg' => $e->getMessage()]);
+            return response()->json(['success' => false, 'msg' => $e->getMessage()]);
         }
     }
 
