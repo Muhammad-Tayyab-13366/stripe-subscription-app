@@ -2,12 +2,21 @@
 @section('content')
     <div class="container mt-5">
         <div class="row sub_row">
+            @php
+
+            $current_plan = app('subscription_helper')->get_current_subscription();
+            @endphp 
             @foreach ($plans as $plan)
                 <div class="col-sm-4">
                     <div class="card sub_card">
-                        <h2>{{ $plan->name }}</h2>
+                        <h2>{{ $plan->name }} @if($current_plan && $current_plan->subscription_plan_price_id == $plan->stripe_price_id) <span class="badge bg-success">Active</span> @endif</h2>
                         <h4>${{ $plan->amount }}</h4>
-                        <button class="btn btn-primary btn_confirmation" data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal">Subscribed</button>
+                        @if($current_plan && $current_plan->subscription_plan_price_id == $plan->stripe_price_id)
+                            <button class="btn btn-danger btn_confirmation" data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal"> Cancel
+                        @else 
+                            <button class="btn btn-primary btn_confirmation" data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal"> Subscribed
+                        @endif
+                        </button>
                     </div>
                 </div>
             @endforeach
@@ -55,7 +64,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button id="btn_buy_plan" type="button" class="btn btn-primary">By Plan</button>
+                <button id="btn_buy_plan" type="button" class="btn btn-primary">Buy Plan</button>
             </div>
             </div>
         </div>
@@ -132,10 +141,14 @@
 
         var submitButton = document.getElementById('btn_buy_plan');
         submitButton.addEventListener('click', function (){
+            submitButton.innerHTML = 'Please wait <i class="fa fa-spinner fa-spin" style="font-size:16px"></i>';
+            submitButton.setAttribute('disabled', 'disabled');
             stripe.createToken(card).then(function(result){
                 if(result.error){
                     var errorElement = document.getElementById('card-error');
                     displayError.innerHTML = result.error.message;
+                    submitButton.innerHTML = 'Buy Plan';
+                    submitButton.removeAttribute('disabled');
                 }else {
                     console.log(result);
                     createSubscription(result.token);
@@ -155,9 +168,13 @@
             },
             success: function(response){
                 if(response.success == true){
-                   
+                    console.log(response);
+                   alert(response.msg )
+                   window.location.reload();
                 }else {
                     alert('some thing went wrong');
+                    submitButton.innerHTML = 'Buy Plan';
+                    submitButton.removeAttribute('disabled');
                 }
                 console.log(response);
             }

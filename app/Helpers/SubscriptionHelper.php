@@ -7,7 +7,9 @@ use App\Models\User;
 use App\Models\PendingFee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use Stripe\Stripe;
+use Stripe\Subscription;
+use Stripe\StripeClient;
 class SubscriptionHelper{
 
     public static function start_monthly_trial_subscription($customer_id, $user_id, $subscriptionPlan ){
@@ -505,4 +507,43 @@ class SubscriptionHelper{
        
     }
     
+
+    public static function cancel_current_subscription($user_id, $subscriptionDetail){
+        try {
+            $return = null;
+            $stripe_key = config('services.stripe.secret_key');
+            Stripe::setApiKey($stripe_key);
+            $stripe = new StripeClient($stripe_key);
+
+            if($subscriptionDetail->stripe_subscription_id != null && $subscriptionDetail->stripe_subscription_id !=''){
+                $current_subscription = Subscription::retrieve($subscriptionDetail->stripe_subscription_id);
+                $current_subscription->cancel();
+            }
+
+            $return = SubscriptionDetail::where('id', $subscriptionDetail->id)->update([
+                "status" => "cancelled",
+                "cancel" => 1,
+                "cancelled_at" => date('Y-m-d H:i:s')
+            ]);
+           
+            User::where('id', $user_id)->update(['is_subscribed' => 0]);
+
+            return $return;
+        } catch (\Exception $e) {
+            return null;
+           // echo $e->getMessage();
+        }
+    }
+
+    public static function get_current_subscription(){
+        $subscriptionDetail = SubscriptionDetail::where(['user_id' => auth()->user()->id,
+            'status' => 'active',
+            'cancel' => 0
+        ])->orderBy('id', 'desc')->first();
+
+        return $subscriptionDetail ;
+        //$stripe_subscription_id = $subscriptionDetail->stripe_subscription_id;
+        //$stripeSubscription = Subscription::retrieve($stripe_subscription_id);
+
+    }
 }

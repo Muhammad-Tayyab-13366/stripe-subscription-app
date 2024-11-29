@@ -69,14 +69,19 @@ class SubscriptionController extends Controller
                 0 -> Monthly, 1-> Yearly, 2-> Lifetime
             */
             // if user wants change monthly to yearly
+           
             if($subscriptionDetail && $subscriptionDetail->plan_interval == 'month' && $subscriptionPlan->type == 1){
-
+                SubscriptionHelper::cancel_current_subscription($user_id, $subscriptionDetail);
+                $subscriptionData = SubscriptionHelper::start_yearly_subscription($customer_id, $user_id, $subscriptionPlan, $stripe);
             }else if($subscriptionDetail && $subscriptionDetail->plan_interval == 'month' && $subscriptionPlan->type == 2){
-
+                SubscriptionHelper::cancel_current_subscription($user_id, $subscriptionDetail);
+                $subscriptionData = SubscriptionHelper::start_lifetime_subscription($customer_id, $user_id, auth()->user()->name, $subscriptionPlan, $stripe);
             }else if($subscriptionDetail && $subscriptionDetail->plan_interval == 'year' && $subscriptionPlan->type == 0){
-
+                SubscriptionHelper::cancel_current_subscription($user_id, $subscriptionDetail);
+                $subscriptionData = SubscriptionHelper::start_monthly_subscription($customer_id, $user_id, $subscriptionPlan, $stripe);
             }else if($subscriptionDetail && $subscriptionDetail->plan_interval == 'year' && $subscriptionPlan->type == 2){
-
+                SubscriptionHelper::cancel_current_subscription($user_id, $subscriptionDetail);
+                $subscriptionData = SubscriptionHelper::start_lifetime_subscription($customer_id, $user_id, auth()->user()->name, $subscriptionPlan, $stripe);
             }else {
                 // not avaialble any subscription 
                 if($subscriptionCount == 0){
