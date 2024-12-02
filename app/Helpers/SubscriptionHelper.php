@@ -442,7 +442,7 @@ class SubscriptionHelper{
             $stripeData = null;
             $currentYear = date('Y');
             $currentPeriodStart = date('Y-m-d H:i:s');
-            $currentPeriodEnd = '2099'.date('m-d').' 59:59:59';
+            $currentPeriodEnd = date('Y-m-d H:i:s', strtotime('2099-12-31 23:59:59'));
             
            
 
@@ -472,9 +472,9 @@ class SubscriptionHelper{
                 $subscriptionDetail = [
                     "user_id" => $user_id,
                     "stripe_subscription_id" => $chargeId ,
-                    "stripe_subscription_schedule_id" => '',
+                    "stripe_subscription_schedule_id" => NULL,
                     "stripe_customer_id" => $customer_id,
-                    "subscription_plan_price_id" => $subscriptionPlan->strpe_price_id,
+                    "subscription_plan_price_id" => $subscriptionPlan->stripe_price_id,
                     "plan_amount" => $subscriptionPlan->amount,
                     "plan_amount_currency" => 'usd',
                     "plan_interval"  => 'lifetime',

@@ -14,3 +14,10 @@
     justify-content: center;
     align-items: center;
 }
+
+.btn_disabled{
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+

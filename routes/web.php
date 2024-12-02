@@ -42,5 +42,6 @@ Route::middleware('isAuthenticate')->group(function(){
     Route::get('/subscription', [SubscriptionController::class, 'loadSubscription'])->name('subscription');
     Route::post('/get-plan-detail', [SubscriptionController::class, 'getPlanDetail'])->name('getPlanDetail');
     Route::post('/create-subscription', [SubscriptionController::class, 'createSubscription'])->name('createSubscription');
+    Route::post('/cancelSubscription', [SubscriptionController::class, 'cancelSubscription'])->name('cancelSubscription');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

@@ -27,7 +27,7 @@ class SubscriptionController extends Controller
             $planId = $request->id;
             $planData = SubscriptionPlan::where('id', $planId)->first();
            
-            $isHasActivePlan = SubscriptionDetail::where(['user_id' => auth()->user()->id, 'status' => 'active'])->count();
+            $isHasActivePlan = SubscriptionDetail::where(['user_id' => auth()->user()->id /*, 'status' => 'active'*/])->count();
             $msg = '';
             if($isHasActivePlan == 0 && $planData->trial_days != null &&  $planData->trial_days != ''){
                 $msg = "You will get ". $planData->trial_days . " days trial, after that we will charge ".$planData->amount." for ".$planData->name." subscription plan.";
@@ -151,7 +151,16 @@ class SubscriptionController extends Controller
                 "updated_at" => date('Y-m-d H:i:s')
             ]
         );
+    }
 
-       
+    public function cancelSubscription(){
+        try {
+            $user_id = auth()->user()->id;
+            $subscriptionDetail = SubscriptionDetail::where(['user_id' => $user_id, 'status' => 'active', 'cancel' => 0])->orderBy('id', 'desc')->first();
+            SubscriptionHelper::cancel_current_subscription($user_id, $subscriptionDetail);
+            return response()->json(['success' => true, 'msg' => 'Subscription cancelled!']);
+        } catch (\Exeption $e) {
+            return response()->json(['success' => false, 'msg' => 'Something went wrong!']);
+        }
     }
 }

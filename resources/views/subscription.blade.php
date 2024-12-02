@@ -3,8 +3,7 @@
     <div class="container mt-5">
         <div class="row sub_row">
             @php
-
-            $current_plan = app('subscription_helper')->get_current_subscription();
+                $current_plan = app('subscription_helper')->get_current_subscription();
             @endphp 
             @foreach ($plans as $plan)
                 <div class="col-sm-4">
@@ -12,9 +11,13 @@
                         <h2>{{ $plan->name }} @if($current_plan && $current_plan->subscription_plan_price_id == $plan->stripe_price_id) <span class="badge bg-success">Active</span> @endif</h2>
                         <h4>${{ $plan->amount }}</h4>
                         @if($current_plan && $current_plan->subscription_plan_price_id == $plan->stripe_price_id)
-                            <button class="btn btn-danger btn_confirmation" data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal"> Cancel
+                            @if ($current_plan && $current_plan->plan_interval == 'lifetime') 
+                            <button class="btn btn-primary">Subscribed</button>
+                            @else 
+                            <button class="btn btn-danger btn_subscription_cancel" data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal"> Cancel
+                            @endif 
                         @else 
-                            <button class="btn btn-primary btn_confirmation" data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal"> Subscribed
+                            <button class="btn btn-primary btn_confirmation @if ($current_plan && $current_plan->plan_interval ==  'lifetime') btn_disabled @endif " data-id="{{ $plan->id }}" data-bs-toggle="modal" data-bs-target="#confirmationModal"> Subscribe
                         @endif
                         </button>
                     </div>
@@ -96,7 +99,6 @@
 
                 }
                
-
             }
         })
        });
@@ -104,6 +106,32 @@
         $("#btn_confirmation_continue").click(function(){
             $("#confirmationModal").modal('hide');
             $("#stripCardModal").modal('show');
+        });
+
+        $(".btn_subscription_cancel").click(function(){
+            obj = $(this);
+            $(obj).html('Please wait <i class="fa fa-spinner fa-spin" style="font-size:16px"></i>');
+            $(obj).attr('disabled', 'disabled');
+            planId = $("#planId").val();
+            $.ajax({
+                type: 'post',
+                url: "{{ route('cancelSubscription') }}",
+                data: { 
+                        'planId' : planId
+                },
+                success: function(response){
+                    if(response.success == true){
+                        console.log(response);
+                        alert(response.msg )
+                    window.location.reload();
+                    }else {
+                        alert('some thing went wrong');
+                        $(obj).html('Cancel');
+                        $(obj).removeAttr('disabled');
+                    }
+                    console.log(response);
+                }
+            });
         });
     });
     
